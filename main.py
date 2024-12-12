@@ -1,7 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 
+# til at parse url
 from urllib.parse import unquote_plus, urlparse, quote, parse_qs, parse_qsl
+
+# til at gemme data
+import csv
 
 ### TODO: opdel i passende funktioner, for bedre design og genbrug!
 
@@ -29,7 +33,7 @@ p = {
     'filters[Keywords]'             : '',
     'filters[ProductionCountry]'    : 'Danmark',
     'filters[PremiereDate][start]'  : '2000',
-    'filters[PremiereDate][end]'    : '2024',
+    'filters[PremiereDate][end]'    : '2025',
     'page'                          : '1'
 }
 respons = requests.get(base_url, params=p)
@@ -40,36 +44,52 @@ print(f'encoded url: {respons.url}')
 
 film_liste = []
 
-while respons.status_code == 200:
+hasNext = True
+
+while hasNext:
 
     soup = BeautifulSoup(respons.text, 'html.parser')
 
-    next_url = soup.css.select_one(".pager__item--next")['href']
-    print(f'next_url: {next_url}')
+    if soup.css.select_one(".pager__item--next"):
+        next_url = base_url + soup.css.select_one(".pager__item--next")['href'] 
+        hasNext = True
+    else:
+        hasNext = False
+
+    # print(f'next_url: {next_url}')
 
     # alle af class 'list__item'
     films = soup.css.select(".list__item")
     for film in films:
         try:
-            # TODO check hvert element for om det findes, og brug en tom streng alternativt...
+            #  check hvert element for om det findes, og brug en tom streng alternativt...
             film_data = {
                 "titel":            film.css.select_one(".beside__title").string,
                 "instruktør":       ', '.join(film.css.select_one(".beside__subtitle").string.split(', ')[:-1]),
                 "årstal":           film.css.select_one(".beside__subtitle").string.split(', ')[-1],
-                "beskrivelse":      film.css.select_one(".beside__text").string
+                "beskrivelse":      film.css.select_one(".beside__text").string if film.css.select_one(".beside__text") else ''
             }
+            # film_data = {}
+
+
             film_liste.append(film_data)
         except Exception as e:
             print(f"Exception {e}, med film {film}")
 
-    print(f'Hentede {len(films)} film. {len(film_liste)} ialt')
-        
+    print(f'Hentede {len(films)} film, {len(film_liste)} ialt')
+    
+    respons = requests.get(next_url)
 
-    respons = requests.get(base_url + next_url)
+#  gem i cvs fil
 
-# print(film_liste)
+with open('filmliste.csv', 'w', encoding='UTF8', newline='\n') as csv_file: # åbn file-handle til at skrive i. Auto close når vi forlader with block
+    dw = csv.DictWriter(
+        csv_file,               # det filehandle der skal skrivesa til
+        film_liste[0].keys(),   # navne på felter fra `film`-dict der skal med i csv-filen. Vi tager alle.
+        quoting=1               # tilføjer " " om alle værdier. F.eks. kan titel og beskrivelse indeholde komma (,)
+        )
+    dw.writeheader()
+    dw.writerows(film_liste)
 
-# TODO gem i cvs fil
 
-
-
+print(f'{len(film_liste)} film gemt i csv-fil.')

@@ -1,0 +1,1 @@
+docker run -d -p 4444:4444 --shm-size="2g" selenium/standalone-edge:4.27.0-20241204

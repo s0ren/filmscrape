@@ -10,8 +10,30 @@ Selenium kan også bruge både Firefoc, Edge og Chrome (samt Chromium) og muligv
 Se også afsnittet om [Installation](#installation) nedenfor. \
 Her vil vises hvordan Selenium bruges med en container. Som egentlig er _remote_ mode, og derfor også kunne være en dedikeret maskine.
 
+#### Start Chrome standalone i Docker
 
+    docker run -d -p 4444:4444 --shm-size="2g" selenium/standalone-chrome:4.27.0-20241204
 
+Se hvad der foregår på selenium grid'ets portal på <http://localhost:4444/>
+
+#### Mindste eksempel
+
+```python
+from selenium import webdriver
+from selenium.webdriver.support.wait import WebDriverWait
+
+options = webdriver.ChromeOptions()
+driver = webdriver.Remote(command_executor="http://localhost:4444", options=options)
+
+url = r"https://www.example.com/"
+driver.get(url)
+html = driver.page_source
+
+driver.quit()
+
+print(html)
+```
+Se også _<hello_selenium.py>_
 
 
 ## Installation

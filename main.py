@@ -1,21 +1,17 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.support.wait import WebDriverWait
 from bs4 import BeautifulSoup
-
 # til at parse url
 from urllib.parse import unquote_plus, urlparse, quote, parse_qs, parse_qsl
-
 # til at gemme data
 import csv
 
+import urllib
+
+options = webdriver.ChromeOptions()
+driver = webdriver.Remote(command_executor="http://localhost:4444/wd/hub", options=options)
+
 ### TODO: opdel i passende funktioner, for bedre design og genbrug!
-
-# Her splittes den oprindelige url (som jeg kopierede fra browserens adresselinje)
-# https://www.dfi.dk/search?additional%5Bsubsection%5D=4158&additional%5Bgrouping%5D=filmdatabase_movie&additional%5Bapi_only%5D=true&additional%5Bhide_back_button%5D=true&additional%5Ballow_empty_query%5D=true&query=&filters%5BCategory%5D=&filters%5BSubCategory%5D=&filters%5BKeywords%5D=&filters%5BProductionCountry%5D=Danmark&filters%5BPremiereDate%5D%5Bstart%5D=2000&filters%5BPremiereDate%5D%5Bend%5D=2024&page=1
-
-raw_url = r"https://www.dfi.dk/search?additional%5Bsubsection%5D=4158&additional%5Bgrouping%5D=filmdatabase_movie&additional%5Bapi_only%5D=true&additional%5Bhide_back_button%5D=true&additional%5Ballow_empty_query%5D=true&query=&filters%5BCategory%5D=&filters%5BSubCategory%5D=&filters%5BKeywords%5D=&filters%5BProductionCountry%5D=Danmark&filters%5BPremiereDate%5D%5Bstart%5D=2000&filters%5BPremiereDate%5D%5Bend%5D=2024&page=1"
-parsed_url = urlparse(unquote_plus(raw_url))
-print(f'raw_url parsed: {parsed_url}')
-print(f'params from raw_url: {parse_qs(parsed_url.query, keep_blank_values=True, )}')
 
 # Her er url'en dekonstrueret manuelt
 # _Bemærk_ at de underlige '%5B' og '%5D' er '[' og ']', som er _urlencoded_, dvs konverteret til tegnets ascii-værdi i hex.
@@ -36,11 +32,16 @@ p = {
     'filters[PremiereDate][end]'    : '2025',
     'page'                          : '1'
 }
-respons = requests.get(base_url, params=p)
-print(f'result: {respons.status_code}')
-print(f'encoded url: {respons.url}')
-# print(f'text: {respons.text}')
-# print(f'respons.next: {respons.next}')
+
+url = base_url + '?' + urllib.parse.urlencode(p)
+
+driver.get(url)
+# vent til siden er loaded i browseren
+# Sætter Selenium Webdriver til at vente på at den annonyme function `return document.readyState`, afslutter i browseren
+WebDriverWait(driver, 10).until(
+    lambda driver: driver.execute_script("return document.readyState") == "complete"
+)
+html = driver.page_source
 
 film_liste = []
 
@@ -48,7 +49,7 @@ hasNext = True
 
 while hasNext:
 
-    soup = BeautifulSoup(respons.text, 'html.parser')
+    soup = BeautifulSoup(html, 'html.parser')
 
     if soup.css.select_one(".pager__item--next"):
         next_url = base_url + soup.css.select_one(".pager__item--next")['href'] 
@@ -78,7 +79,15 @@ while hasNext:
 
     print(f'Hentede {len(films)} film, {len(film_liste)} ialt')
     
-    respons = requests.get(next_url)
+    driver.get(url)
+    # vent til siden er loaded i browseren
+    # Sætter Selenium Webdriver til at vente på at den annonyme function `return document.readyState`, afslutter i browseren
+    WebDriverWait(driver, 10).until(
+        lambda driver: driver.execute_script("return document.readyState") == "complete"
+    )
+    html = driver.page_source
+
+driver.quit()
 
 #  gem i cvs fil
 

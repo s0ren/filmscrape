@@ -16,7 +16,7 @@ Her vil vises hvordan Selenium bruges med en container. Som egentlig er _remote_
 
 Se hvad der foregår på selenium grid'ets portal på <http://localhost:4444/>
 
-#### Mindste eksempel
+#### Mindste mulige eksempel
 
 ```python
 from selenium import webdriver
@@ -35,10 +35,22 @@ print(html)
 ```
 Se også _<hello_selenium.py>_
 
+Se også disse sider:
+* Om at tilslutte til Selenium grid 
+    * <https://medium.com/@ethan.han.qa/how-to-connect-selenium-grid-with-python-35bb460803f4>
+* om at bruge Selenium til scraping
+    * <https://medium.com/@dmautomationqa/a-complete-guide-to-web-scraping-with-selenium-python-in-2024-4c856890be68>
+    * https://www.zenrows.com/blog/selenium-python-web-scraping#export-data
 
 ## Installation
 
 ### Python lib
+
+Der skal bruges et enkel library, som installeres med _pip_:
+
+    pip install selenium    
+
+Det er også en god ide at tilføje `selenium` til _requirements.txt_.
 
 ### WebDriver eller container
 

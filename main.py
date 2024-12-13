@@ -70,16 +70,14 @@ while hasNext:
                 "årstal":           film.css.select_one(".beside__subtitle").string.split(', ')[-1],
                 "beskrivelse":      film.css.select_one(".beside__text").string if film.css.select_one(".beside__text") else ''
             }
-            # film_data = {}
-
-
             film_liste.append(film_data)
         except Exception as e:
             print(f"Exception {e}, med film {film}")
 
+    print(f'Seneste film: {film_data['titel']}')    
     print(f'Hentede {len(films)} film, {len(film_liste)} ialt')
     
-    driver.get(url)
+    driver.get(next_url)
     # vent til siden er loaded i browseren
     # Sætter Selenium Webdriver til at vente på at den annonyme function `return document.readyState`, afslutter i browseren
     WebDriverWait(driver, 10).until(

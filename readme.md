@@ -1,4 +1,4 @@
-# WebSraping
+# WebScraping
 
 ## Brug Selenium i stedet for requests
 

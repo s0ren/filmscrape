@@ -47,6 +47,20 @@ film_liste = []
 
 hasNext = True
 
+film_data_keys = [
+    "titel",
+    "instruktør",
+    "årstal",
+    "beskrivelse",
+]
+with open('filmliste.csv', 'w', encoding='UTF8', newline='\n') as csv_file: # åbn file-handle til at skrive i. Auto close når vi forlader with block
+    dw = csv.DictWriter(
+        csv_file,               # det filehandle der skal skrivesa til
+        film_data_keys,         # navne på felter fra `film`-dict der skal med i csv-filen. Vi tager alle.
+        quoting=1               # tilføjer " " om alle værdier. F.eks. kan titel og beskrivelse indeholde komma (,)
+        )
+    dw.writeheader()
+
 while hasNext:
 
     soup = BeautifulSoup(html, 'html.parser')
@@ -59,6 +73,7 @@ while hasNext:
 
     # print(f'next_url: {next_url}')
 
+    film_liste_ = []
     # alle af class 'list__item'
     films = soup.css.select(".list__item")
     for film in films:
@@ -70,12 +85,23 @@ while hasNext:
                 "årstal":           film.css.select_one(".beside__subtitle").string.split(', ')[-1],
                 "beskrivelse":      film.css.select_one(".beside__text").string if film.css.select_one(".beside__text") else ''
             }
-            film_liste.append(film_data)
+            film_liste_.append(film_data)
         except Exception as e:
             print(f"Exception {e}, med film {film}")
 
     print(f'Seneste film: {film_data['titel']}')    
     print(f'Hentede {len(films)} film, {len(film_liste)} ialt')
+    print(f"Gemmer i {'filmliste.csv'}")
+    with open('filmliste.csv', 'a', encoding='UTF8', newline='\n') as csv_file: # åbn file-handle til at skrive i. Auto close når vi forlader with block
+        dw = csv.DictWriter(
+            csv_file,               # det filehandle der skal skrivesa til
+            film_liste_[0].keys(),   # navne på felter fra `film`-dict der skal med i csv-filen. Vi tager alle.
+            quoting=1               # tilføjer " " om alle værdier. F.eks. kan titel og beskrivelse indeholde komma (,)
+            )
+        # dw.writeheader()
+        dw.writerows(film_liste_)
+
+    film_liste += film_liste_
     
     driver.get(next_url)
     # vent til siden er loaded i browseren
@@ -89,14 +115,16 @@ driver.quit()
 
 #  gem i cvs fil
 
-with open('filmliste.csv', 'w', encoding='UTF8', newline='\n') as csv_file: # åbn file-handle til at skrive i. Auto close når vi forlader with block
-    dw = csv.DictWriter(
-        csv_file,               # det filehandle der skal skrivesa til
-        film_liste[0].keys(),   # navne på felter fra `film`-dict der skal med i csv-filen. Vi tager alle.
-        quoting=1               # tilføjer " " om alle værdier. F.eks. kan titel og beskrivelse indeholde komma (,)
-        )
-    dw.writeheader()
-    dw.writerows(film_liste)
+# nu indsætter jeg i filen løbende, fordi det ser bedre ud for demoen
+
+# with open('filmliste.csv', 'w', encoding='UTF8', newline='\n') as csv_file: # åbn file-handle til at skrive i. Auto close når vi forlader with block
+#     dw = csv.DictWriter(
+#         csv_file,               # det filehandle der skal skrivesa til
+#         film_liste[0].keys(),   # navne på felter fra `film`-dict der skal med i csv-filen. Vi tager alle.
+#         quoting=1               # tilføjer " " om alle værdier. F.eks. kan titel og beskrivelse indeholde komma (,)
+#         )
+#     dw.writeheader()
+#     dw.writerows(film_liste)
 
 
 print(f'{len(film_liste)} film gemt i csv-fil.')
